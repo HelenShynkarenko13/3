@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Clinics list</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+    <h2>Clinics list</h2>
+    <form name="clinicForm">
+        <input type="hidden" name="id" value="0" />
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input class="form-control" name="name" />
+        </div>
+        <div class="form-group">
+            <label for="rating">Rating:</label>
+            <input class="form-control" name="rating" />
+        </div>
+        <div class="form-group">
+            <label for="type">Type:</label>
+            <input class="form-control" name="type" />
+        </div>
+        <div class="panel-body">
+            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            <a id="reset" class="btn btn-sm btn-primary">Reset</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered">
+        <thead><tr><th>Id</th><th>Name</th><th>Rating</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+   
+    <script>
+    
+        async function GetClinics() {
+            console.log("dsfsdf");
+            
+            const response = await fetch("/api/clinics", {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+           
+            if (response.ok === true) {
+               
+                const clinics = await response.json();
+                let rows = document.querySelector("tbody"); 
+                clinics.forEach(clinic => {
+                   
+                    rows.append(row(clinic));
+                });
+            }
+        }
+       
+        async function GetClinic(id) {
+            const response = await fetch("/api/clinics/" + id, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const clinic = await response.json();
+                const form = document.forms["clinicForm"];
+                form.elements["id"].value = clinic._id;
+                form.elements["name"].value = clinic.name;
+                form.elements["rating"].value = clinic.rating;
+                form.elements["type"].value = clinic.type;
+            }
+        }
+      
+        async function CreateClinic(clinicName, clinicRating, clinicType) {
+  
+            const response = await fetch("api/clinics", {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: clinicName,
+                    rating: clinicRating,
+                    type: clinicType
+                })
+            });
+            if (response.ok === true) {
+                const clinic = await response.json();
+                reset();
+                document.querySelector("tbody").append(row(clinic));
+            }
+        }
+       
+        async function EditClinic(clinicId, clinicName, clinicRating, clinicType) {
+            const response = await fetch("api/clinics", {
+                method: "PUT",
+                headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: clinicId,
+                    name: clinicName,
+                    rating: clinicRating,
+                    type: clinicType
+                })
+            });
+            if (response.ok === true) {
+                const clinic = await response.json();
+                reset();
+                document.querySelector("tr[data-rowid='" + clinic._id + "']").replaceWith(row(clinic));
+            }
+        }
+      
+        async function DeleteClinic(id) {
+            const response = await fetch("/api/clinics/" + id, {
+                method: "DELETE",
+                headers: { "Accept": "application/json" }
+            });
+            if (response.ok === true) {
+                const clinic = await response.json();
+                document.querySelector("tr[data-rowid='" + clinic._id + "']").remove();
+            }
+        }
+  
+       
+        function reset() {
+            const form = document.forms["clinicForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+      
+        function row(clinic) {
+  
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-rowid", clinic._id);
+  
+            const idTd = document.createElement("td");
+            idTd.append(clinic._id);
+            tr.append(idTd);
+  
+            const nameTd = document.createElement("td");
+            nameTd.append(clinic.name);
+            tr.append(nameTd);
+  
+            const ratingTd = document.createElement("td");
+            ratingTd.append(clinic.rating);
+            tr.append(ratingTd);
+              
+            const typeTd = document.createElement("td");
+            typeTd.append(clinic.type);
+            tr.append(typeTd);
+
+            const linksTd = document.createElement("td");
+  
+            const editLink = document.createElement("a");
+            editLink.setAttribute("data-id", clinic._id);
+            editLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            editLink.append("Change");
+            editLink.addEventListener("click", e => {
+  
+                e.preventDefault();
+                GetClients(clinic._id);
+            });
+            linksTd.append(editLink);
+  
+            const removeLink = document.createElement("a");
+            removeLink.setAttribute("data-id", clinic._id);
+            removeLink.setAttribute("style", "cursor:pointer;padding:15px;");
+            removeLink.append("Delete");
+            removeLink.addEventListener("click", e => {
+  
+                e.preventDefault();
+                DeleteClient(client._id);
+            });
+  
+            linksTd.append(removeLink);
+            tr.appendChild(linksTd);
+  
+            return tr;
+        }
+    
+        document.getElementById("reset").click(function (e) {
+  
+            e.preventDefault();
+            reset();
+        })
+  
+      
+        document.forms["clinicForm"].addEventListener("submit", e => {
+            e.preventDefault();
+            const form = document.forms["clinicForm"];
+            const id = form.elements["id"].value;
+            const name = form.elements["name"].value;
+            const rating = form.elements["rating"].value;
+            const type = form.elements["type"].value;
+            if (id == 0)
+                CreateClinic(name, rating, type);
+            else
+                EditClinic(id, name, rating, type);
+        });
+  
+        
+        GetClinics();
+    </script>
+</body>
+</html>
